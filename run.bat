@@ -1,6 +1,6 @@
 :: file: run.bat
 :: author: kyunggeun lee
-:: brief: build FileIOSamples project
+:: brief: run target executable
 @echo off
 
 if "%1"=="" (
@@ -8,10 +8,7 @@ if "%1"=="" (
     echo run [executable_name]
     goto :eof
 ) else (
-    pushd .\build\Debug
+    pushd .\win32\Debug
     %1.exe
     popd
 )
-
-
-    
