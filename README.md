@@ -102,9 +102,9 @@
           10: 6c 64 21 0d 0a                ld!~~
     ```
 
-    `<algorithm>` 헤더의 `std::transform(first_l, last_l, d_first, unary_op)` 함수는 `first_l`과 `last_l` 사이에 있는 모든 원소에 `unary_op` 함수를 부른 뒤 `d_first`부터 하나씩 써넣는다. `std::istreambuf_iteator<char>`는 직접 참조하면 `char`를 반환하지만 그 결과를 `std::vector<unsigned char>`에 저장하기 위해 각 원소를 캐스팅 하기 위함이다.
+    `<algorithm>` 헤더의 `std::transform(first_l, last_l, d_first, unary_op)` 함수는 `first_l`과 `last_l` 사이에 있는 모든 원소에 `unary_op` 함수를 불러 반환된 결과를 `d_first`에서부터 하나씩 써넣는다. `std::istreambuf_iteator<char>`는 직접 참조하면 `char`를 반환하지만 그 결과를 `std::vector<unsigned char>`에 저장하기 위해 각 원소를 캐스팅 한다.
 
-    굳이 `unsigned char`로 캐스팅 하는 이유는 나중에 `std::cout`을 통해 출력할 때 다시 `unsigned int`로 캐스팅 하기 떄문이다. 만약 음수인 `char`를 곧바로 `unsigned int`로 캐스팅하는 경우 `0`이 있어야 할 자리에 `f`가 오기 때문에 실제 바이트의 생김새와 다른 결과가 출력되기 때문이다.
+    `unsigned char`로 저장된 데이터는 출력할 때 또다시 `unsigned int`로 캐스팅하낟. 만약 음수인 `char`를 곧바로 `unsigned int`로 캐스팅하면 `0`이 있어야 할 자리에 `f`가 와서 잘못된 결과가 출력되기 때문이다.
 
     ```c++
     std::cout << 'a'; // 출력: a
@@ -116,21 +116,22 @@
     std::cout << std::hex << static_cast<unsigned int>('\255') && 0xff; // 출력: ff
     ```
 
-    `transform` 함수에서 `d_first` 위치에 `std::back_inserter(data)`가 들어가는 이유는 아직 파일의 크기를 모르기 때문이다. `std::back_inserter`로 만들어진 이터레이터는 쓰기 참조만 가능하며 값을 받아 내부에서 `std::vector::push_back()`함수를 호출한다.
+    `std::transform` 함수에서 `d_first` 위치에 `std::back_inserter(data)`가 들어가는 이유는 아직 파일의 크기를 모르기 때문이다. `std::back_inserter`로 만들어진 이터레이터는 쓰기 참조만 가능하며, 내부적으로 `std::vector::push_back()`함수를 호출한다.
 
     소스코드의 나머지 부분은 `data`에 저장된 파일의 내용을 `std::cout`에 출력하는 부분이다.
 
     - // row 0, column 0 : empty  
-      `std::string(size_t n, char c)` 생성자는 공백 문자가 `Column0Size`만큼 반복되는 스트링을 만든다. 예를 들어 `std::strig(12, ' ')`를 호출하면 공백만 가득 찬 길이 12의 스트링이 만들어진다
+      `std::string(size_t n, char c)` 생성자는 `c` 문자가 `n`만큼 반복되는 스트링을 만든다. 예를 들어 `std::strig(12, ' ')`를 호출하면 공백문자만 가득 찬 길이 12의 스트링이 만들어진다
 
     - // row 1, column 0 : second to the most significant digit index  .  
       숫자를 출력할 때 16진법으로 출력하려면 `<iomanip>`헤더의 `std::hex`를 사용한다. 다시 10진법으로 돌아가려면, `std::dec`을 사용한다.  
       출력 결과가 차지할 최소한의 너비를 지정하려면 `<iomanip>` 헤더의 `std::setw`을 사용한다. 여기서 w는 width의 약자이다.  
-      지정한 너비보다 더 적게 쓰여진 경우 빈 자리는 공백 문자 ' '로 채워진다. 채워지는 문자를 바꾸려면 `std::setfill`을 사용할 수 있다. 위의 예시에서는 한 자리수 16진법 수를 출력할 때에도 빈 자리에 `0`이 오도록 하기 위해 `std::setfill('0')`을 사용했다.
+      지정한 너비보다 더 적게 쓰여진 경우 빈 자리는 공백 문자 ' '로 채워진다. 채워지는 문자를 바꾸려면 `std::setfill`을 사용할 수 있다.
 
     - // row 1, column 1 : bytes in hexadecimal display  
       `std::cout`에 출력하기 전에 `unsigned int`로 캐스팅하여 숫자로써 출력한다.  
-      `std::hex`나 `std::setfill`은 `std::cout`의 플래그로 저장되며 해당 플래그는 `std::cout.flags()`메소드로 확인할 수 있다. 한 번 적용된 플래그는 그대로 남기 때문에 다음 출력에 영향을 미칠 수 있다. 그렇기 때문에 숫자를 출력할 때 마다 항상 다시 `std::dec`과 `std::hex`를 교차해서 사용하는 것이다.
+      `std::hex`나 `std::setfill`은 `std::cout`의 플래그로 저장되며 해당 플래그는 `std::cout.flags()`메소드로 확인할 수 있다.  
+      한 번 적용된 플래그는 그대로 남기 때문에 다음 출력에 영향을 미친다. 그렇기 때문에 숫자를 출력할 때 마다 항상 다시 `std::dec`, `std::hex`, `std::setfill`, `std::setw`를 다시 사용해야 한다.
 
     - // row 1, column 2 : bytes in string display  
-      `<cctype>` 헤더의 `std::isprint`함수를 사용해 해당 문자가 출력 가능한 문자인지 확인할 수 있다.
+      `<cctype>` 헤더의 `std::isprint`함수를 사용해 출력 가능한 ASCII 문자인지 확인할 수 있다.
