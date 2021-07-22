@@ -12,7 +12,7 @@
 
 여기에 나열된 이름은 cmake의 타겟 이름이기도 하며, 빌드 후 생성되는 실행파일의 이름이기도 하다.
 
-1. ReadPrint
+### ReadPrint
 
     ReadPrint.cpp
 
@@ -28,7 +28,7 @@
 
     `std::istreambuf_iterator`는 스트림 버퍼의 내용을 나타내는 이터레이터이다. 기본생성자로 생성한 경우 끝을 나타내는 용도로 쓸 수 있다.
 
-2. ReadBinaryPrintHex
+### ReadBinaryPrintHex
 
     ReadBinaryPrintHex.cpp
 
