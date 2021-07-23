@@ -5,10 +5,16 @@
 #include <cctype>
 #include <algorithm>
 
-int main()
+int main(int argc, char** argv)
 {
-    const char* const pFilename = "TextCRLF.txt";
-    std::ifstream ifs(pFilename, std::ios_base::binary);
+    if( argc < 2 )
+    {
+        std::cout << "usage : ReadBinaryPrintHex [filename]" << std::endl;
+        return 0;
+    }
+
+    const char* const filename = argv[1];
+    std::ifstream ifs(filename, std::ios_base::binary);
     if(ifs)
     {
         std::vector<unsigned char> data;
@@ -48,7 +54,7 @@ int main()
     }
     else
     {
-        std::cerr << pFilename << " was not found." << std::endl;
+        std::cerr << filename << " could not be opened for reading." << std::endl;
     }
     return 0;
 }

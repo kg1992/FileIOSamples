@@ -12,6 +12,38 @@
 
 여기에 나열된 이름은 cmake의 타겟 이름이기도 하며, 빌드 후 생성되는 실행파일의 이름이기도 하다.
 
+### PipePrint
+
+이 예시는 `std::cin`으로 입력받는 내용을 그대로 `std::cout`으로 출력한다.
+
+`ctrl+z`를 입력하면 중지한다.
+
+```c++
+#include <iostream>
+#include <algorithm>
+
+int main()
+{
+    std::cout << "press ctrl+z to stop." << std::endl;
+    std::copy(
+        std::istreambuf_iterator<char>(std::cin), 
+        std::istreambuf_iterator<char>(),
+        std::ostreambuf_iterator<char>(std::cout)
+        );
+    return 0;
+}
+```
+
+`<algorithm>`헤더의 `std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해 넣는 알고리즘이다.
+
+first, last는 2
+
+`<algorithm>` 헤더의 `std::copy`는 입력 이터레이터 두 개를 받아 그 사이에 있는 값을 목적지 이터레이터에 쓰는 알고리즘이다.
+
+`std::istreambuf_iterator`는 스트림 버퍼의 내용을 char 단위로 추출하는 이터레이터이다. 기본생성자로 만들어진 이터레이터는 `end of stream` 이터레이터라고 하며, 끝을 지정해야 하는 곳에 대신 쓸 수 있다.
+
+`std::ostreambuf_iterator`는 스트림 버퍼의 내용을 char 단위로 쓰는 이터레이터이다.
+
 ### ReadPrint
 
 ```c++
@@ -19,36 +51,38 @@
 #include <fstream>
 #include <string>
 
-int main()
+int main(int argc, char** argv)
 {
-    const char* const pFilename = "TextCRLF.txt";
-    std::ifstream ifs(pFilename);
+    if( argc < 2 )
+    {
+        std::cout << "usage : ReadPrint [filename]" << std::endl;
+        return 0;
+    }
+
+    const char* const filename = argv[1];
+    std::ifstream ifs(filename);
     if(ifs)
     {
-        std::string str;
-        str.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-        std::cout << str;
+        std::copy(
+            std::istreambuf_iterator<char>(ifs), 
+            std::istreambuf_iterator<char>(), 
+            std::ostreambuf_iterator<char>(std::cout));
     }
     else
     {
-        std::cerr << pFilename << " was not found." << std::endl;
+        std::cerr << filename << " could not be opened for reading." << std::endl;
     }
     return 0;
 }
-
 ```
 
-이 예시는 텍스트 파일의 내용을 `std::string` 타입의 변수로 읽어들여 `std::cout`으로 출력한다.
+이 예시는 텍스트 파일의 내용을 `std::cout`으로 출력한다.
 
 `std::ifstream`은 데이터의 파일경로를 받아 파일을 열어 `std::basic_istream`의 인터페이스를 통해 데이터를 엑세스 할 수 있게 해준다.
 
 `std::ifstream`은 절대경로 혹은 상대경로를 받는다. 상대경로일 경우 작업 디렉토리(Working Directory)를 기준으로 찾는다. 작업 디렉토리는 윈도우즈 콘솔에서 `echo %cd`, 리눅스 콘솔에서 `pwd`로 확인할 수 있다. 탐색기에서 더블클릭하여 exe파일을 실행한 경우 exe파일이 있는 위치가 작업 디렉토리가 된다.
 
 파일이 제대로 열렸는지 확인하려면 `std::ifstream::operator bool()` 캐스팅 오퍼레이터를 사용한다. 이 오퍼레이터가 반환하는 결과는 `!std::ios::fail()`을 부르는 것과 같다.
-
-`std::string::assign` 메소드는 두 개의 이터레이터를 받아 이터레이터가 나타내는 범위에 있는 문자열을 그대로 복사해온다. assign 메소드를 부르기 전에 원래 스트링에 있던 내용은 버려진다. 그러나 위의 예제에서는 `std::string`을 만들자마자 `std::string::assign`을 부르므로 원래부터 비어있다.
-
-`std::istreambuf_iterator`는 스트림 버퍼의 내용을 나타내는 이터레이터이다. 기본생성자로 생성한 경우 끝을 나타내는 용도로 쓸 수 있다.
 
 ### ReadBinaryPrintHex
 
@@ -57,6 +91,7 @@ int main()
 출력할 때 한 줄에 10 바이트 씩 출력하며, 각 바이트의 값은 16진수로 표시하고 오른쪽에 ASCII 코드 중 출력 가능한 문자가 있을 경우 표시해준다. 표시할 수 없는 문자는 `~`로 나타난다.
 
 ```c++
+// ReadBinaryPrintHex.cpp
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -64,10 +99,16 @@ int main()
 #include <cctype>
 #include <algorithm>
 
-int main()
+int main(int argc, char** argv)
 {
-    const char* const pFilename = "TextCRLF.txt";
-    std::ifstream ifs(pFilename, std::ios_base::binary);
+    if( argc < 2 )
+    {
+        std::cout << "usage : ReadBinaryPrintHex [filename]" << std::endl;
+        return 0;
+    }
+
+    const char* const filename = argv[1];
+    std::ifstream ifs(filename, std::ios_base::binary);
     if(ifs)
     {
         std::vector<unsigned char> data;
@@ -107,7 +148,7 @@ int main()
     }
     else
     {
-        std::cerr << pFilename << " was not found." << std::endl;
+        std::cerr << filename << " could not be opened for reading." << std::endl;
     }
     return 0;
 }

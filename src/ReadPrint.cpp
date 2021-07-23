@@ -2,19 +2,26 @@
 #include <fstream>
 #include <string>
 
-int main()
+int main(int argc, char** argv)
 {
-    const char* const pFilename = "TextCRLF.txt";
-    std::ifstream ifs(pFilename);
+    if( argc < 2 )
+    {
+        std::cout << "usage : ReadPrint [filename]" << std::endl;
+        return 0;
+    }
+
+    const char* const filename = argv[1];
+    std::ifstream ifs(filename);
     if(ifs)
     {
-        std::string str;
-        str.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-        std::cout << str;
+        std::copy(
+            std::istreambuf_iterator<char>(ifs), 
+            std::istreambuf_iterator<char>(), 
+            std::ostreambuf_iterator<char>(std::cout));
     }
     else
     {
-        std::cerr << pFilename << " was not found." << std::endl;
+        std::cerr << filename << " could not be opened for reading." << std::endl;
     }
     return 0;
 }
