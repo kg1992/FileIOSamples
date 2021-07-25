@@ -25,7 +25,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            std::cerr << destinationFilename << " could not be opened for writing" << std::endl;
+            std::cerr << destinationFilename << " could not be opened for writing." << std::endl;
         }
     }
     else

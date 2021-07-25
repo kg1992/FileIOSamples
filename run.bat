@@ -30,9 +30,27 @@ CopyFile Text.txt TextCopy.txt
 echo.
 timeout 1 > nul
 
+echo * "FileSize rgbymcbw.bmp"
+timeout 1 > Nul
+FileSize rgbymcbw.bmp
+echo.
+timeout 1 > nul
+
 echo * "FileEqual Text.txt TextCopy.txt"
 timeout 1 > nul
 FileEqual Text.txt TextCopy.txt
+echo.
+timeout 1 > nul
+
+echo * "FileEqual Text.txt rgbymcbw.bmp"
+timeout 1 > Nul
+FileEqual Text.txt rgbymcbw.bmp
+echo.
+timeout 1 > nul
+
+echo * "FileEqual Text.txt TextSimilar.txt"
+timeout 1 > Nul
+FileEqual Text.txt TextSimilar.txt
 echo.
 timeout 1 > nul
 

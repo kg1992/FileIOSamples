@@ -9,6 +9,7 @@ add_executable(PipePrint PipePrint.cpp)
 add_executable(ReadPrint ReadPrint.cpp)
 add_executable(ReadBinaryPrintHex ReadBinaryPrintHex.cpp)
 add_executable(CopyFile CopyFile.cpp)
+add_executable(FileSize FileSize.cpp)
 add_executable(FileEqual FileEqual.cpp)
 
 message(STATUS ${CMAKE_CXX_COMPILER_ID})

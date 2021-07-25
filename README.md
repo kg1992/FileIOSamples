@@ -8,17 +8,20 @@
 
 프로젝트는 cmake를 사용하며, 최상위 소스 디렉토리는 src이다. 각각의 예시에 대해 하나씩 타겟이 있으며 각 타겟은 실행파일을 하나 생성한다. 빌드가 완료되고 나면 src 디렉토리의 모든 테스트용 파일을 실행파일 위치로 복사한다.
 
+run.bat은 각각의 실행파일을 1초에 하나 씩 실행시켜준다.
+
 ## 예시
 
-여기에 나열된 이름은 cmake의 타겟 이름이기도 하며, 빌드 후 생성되는 실행파일의 이름이기도 하다.
+여기에 나열된 이름은 cmake 타겟 이름이기도 하며, 빌드 후 생성되는 실행파일의 이름이기도 하다.
 
 ### PipePrint
 
-이 예시는 `std::cin`으로 입력받는 내용을 그대로 `std::cout`으로 출력한다.
+이 프로그램은 `std::cin`으로 입력받는 내용을 그대로 `std::cout`으로 출력한다.
 
 `ctrl+z`를 입력하면 중지한다.
 
 ```c++
+// PipePrint.cpp
 #include <iostream>
 #include <algorithm>
 
@@ -34,19 +37,24 @@ int main()
 }
 ```
 
-`<algorithm>`헤더의 `std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해 넣는 알고리즘이다.
+`std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해 넣는 알고리즘이다.
 
-first, last는 2
+`std::istreambuf_iterator`의 생성자는 `std::basic_istream` 객체를 받는다. 이터레이터를 참조하면 `std::basic_istream`와 연관된 스트림 객체의 `std::basic_sterambuf::sgetc` 함수를 호출해 얻은 문자를 반환한다. 
 
-`<algorithm>` 헤더의 `std::copy`는 입력 이터레이터 두 개를 받아 그 사이에 있는 값을 목적지 이터레이터에 쓰는 알고리즘이다.
+`std::istreambuf_iterator::operator++`을 호출하면 내부적으로 `std::basic_sterambuf::sbumpc`를 호출해 스트림 버퍼 내에서의 위치를 한 칸 이동시킨다. `sgetc`와 `sbumpc`는 둘 다 문자를 스트림 버퍼에서 얻는 함수지만. `istream`의 `peek`과 `get`의 관계와 같이 전자는 버퍼 내에서의 위치를 옮기지 않고 후자는 버퍼 내에서의 위치를 한 칸 옮긴다.
 
-`std::istreambuf_iterator`는 스트림 버퍼의 내용을 char 단위로 추출하는 이터레이터이다. 기본생성자로 만들어진 이터레이터는 `end of stream` 이터레이터라고 하며, 끝을 지정해야 하는 곳에 대신 쓸 수 있다.
+기본생성자로 만들어진 `std::istremabuf_iterator`는 `end of stream` 이터레이터라고 하며, 끝을 지정해야 하는 곳에 대신 쓸 수 있다. `operator++`은 `sbumpc()`를 부른 결과 `eof` 문자가 반환 된 경우 자기 자신을 `end of stream` 이터레이터로 초기화 한다.
 
-`std::ostreambuf_iterator`는 스트림 버퍼의 내용을 char 단위로 쓰는 이터레이터이다.
+`std::ostreambuf_iterator`의 새성자는 `std::basic_ostream`객체를 받는다. 이터레이터를 참조하면 `operator=`를 정의하는 프록시 클래스를 반환한다. 프록시 클래스에 문자를 배정하면 내부적으로 `std::basic_streambuf::sputc`함수를 불러 문자를 스트림 버퍼에 하나 써넣는다.
+
+`std::ostreambuf_iterator::operator++`은 정의되어 있지만 호출해도 위치가 실제로 바뀌지는 않고 바로 `*this`를 반환한다.
 
 ### ReadPrint
 
+이 프로그램은 명령줄로 주어진 텍스트 파일의 내용을 `std::cout`으로 출력한다.
+
 ```c++
+// ReadPrint.cpp
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -76,8 +84,6 @@ int main(int argc, char** argv)
 }
 ```
 
-이 예시는 텍스트 파일의 내용을 `std::cout`으로 출력한다.
-
 `std::ifstream`은 데이터의 파일경로를 받아 파일을 열어 `std::basic_istream`의 인터페이스를 통해 데이터를 엑세스 할 수 있게 해준다.
 
 `std::ifstream`은 절대경로 혹은 상대경로를 받는다. 상대경로일 경우 작업 디렉토리(Working Directory)를 기준으로 찾는다. 작업 디렉토리는 윈도우즈 콘솔에서 `echo %cd`, 리눅스 콘솔에서 `pwd`로 확인할 수 있다. 탐색기에서 더블클릭하여 exe파일을 실행한 경우 exe파일이 있는 위치가 작업 디렉토리가 된다.
@@ -86,7 +92,7 @@ int main(int argc, char** argv)
 
 ### ReadBinaryPrintHex
 
-이 예시는 바이너리 파일의 내용을 `std::vector` 타입의 변수로 읽어들여 `std::cout`에 출력한다.
+이 프로그램은 명령줄 인수로 주어진 바이너리 파일의 내용을 `std::vector` 타입의 변수로 읽어들인 뒤 `std::cout`에 순서대로 출력한다.
 
 출력할 때 한 줄에 10 바이트 씩 출력하며, 각 바이트의 값은 16진수로 표시하고 오른쪽에 ASCII 코드 중 출력 가능한 문자가 있을 경우 표시해준다. 표시할 수 없는 문자는 `~`로 나타난다.
 
@@ -154,7 +160,7 @@ int main(int argc, char** argv)
 }
 ```
 
-`ifstream`에 `std::ios_base::binary`를 인수로 제공할 경우 파일을 바이너리로 파일로서 읽어들인다. gcc의 경우 둘 사이에 차이는 없다. VisaulC의 경우 텍스트 모드일 때 `\r\n` 문자열이 파일 속에 존재할 경우 `\r`을 무시하고 `\n`만 읽어들이며, 바이너리 모드일 경우 `\r\n`(0d0a)을 그대로 읽어들인다. 예를 들어 윈도우즈 메모장에서 작성한 파일인 `textCRLF.txt`파일로 실행 할 경우 마지막에 새줄이 들어가 있으며 파일을 실행할 때 다음과 같은 결과를 출력하며, 마지막에 0d0a가 나오는 것을 확인할 수 있다.
+`std::ifstream`의 생성자에 `std::ios_base::binary`를 인수로 제공할 경우 파일을 바이너리로 파일로서 읽어들인다. gcc의 경우 별 차이는 없다. VisaulC의 경우 텍스트 모드일 때 `\r\n` 문자열이 파일 속에 존재할 경우 `\r`을 무시하고 `\n`만 읽어들이며, 바이너리 모드일 경우 `\r\n`(0d0a)을 그대로 읽어들인다. 예를 들어 윈도우즈 메모장에서 작성하고 저장한 파일인 `Text.txt`파일로 실행 할 경우 마지막에 새줄이 들어가 있으며 파일을 실행할 때 다음과 같은 결과를 출력한다. 마지막에 두 바이트가 0d 0a인 것을 확인할 수 있다.
 
 ```console
             0  1  2  3  4  5  6  7  8  9
@@ -165,24 +171,24 @@ int main(int argc, char** argv)
 
 `<algorithm>` 헤더의 `std::transform(first_l, last_l, d_first, unary_op)` 함수는 `first_l`과 `last_l` 사이에 있는 모든 원소에 `unary_op` 함수를 불러 반환된 결과를 `d_first`에서부터 하나씩 써넣는다. `std::istreambuf_iteator<char>`는 직접 참조하면 `char`를 반환하지만 그 결과를 `std::vector<unsigned char>`에 저장하기 위해 각 원소를 캐스팅 한다.
 
-`unsigned char`로 저장된 데이터는 출력할 때 또다시 `unsigned int`로 캐스팅하낟. 만약 음수인 `char`를 곧바로 `unsigned int`로 캐스팅하면 `0`이 있어야 할 자리에 `f`가 와서 잘못된 결과가 출력되기 때문이다.
+`unsigned char`로 저장된 데이터는 출력할 때 또다시 `unsigned int`로 캐스팅한다. 만약 음수인 `char`를 곧바로 `unsigned int`로 캐스팅하면 `0`이 있어야 할 자리에 `f`가 와서 잘못된 결과가 출력되기 때문이다.
 
 ```c++
 std::cout << 'a'; // 출력: a
 std::cout << static_cast<unsigned char>('a'); // 출력: a
 std::cout << static_cast<unsigned int>('a'); // 출력: 97
-std::cout << std::hex << static_cast<unsigned int>('a'); // 출력: 61 
+std::cout << std::hex << static_cast<unsigned int>('a'); // 출력: 61
 std::cout << std::hex << static_cast<unsigned int>('\255'); // 출력: ffffffff
 std::cout << std::hex << static_cast<unsigned int>(static_cast<unsigned char>('\255')); // 출력: ff
 std::cout << std::hex << static_cast<unsigned int>('\255') && 0xff; // 출력: ff
 ```
 
-`std::transform` 함수에서 `d_first` 위치에 `std::back_inserter(data)`가 들어가는 이유는 아직 파일의 크기를 모르기 때문이다. `std::back_inserter`로 만들어진 이터레이터는 쓰기 참조만 가능하며, 내부적으로 `std::vector::push_back()`함수를 호출한다.
+`std::transform` 함수에서 `d_first` 위치에 `std::back_inserter(data)`가 들어가는 이유는 아직 파일의 크기를 모르기 때문이다. `std::back_inserter`로 만들어진 이터레이터는 쓰기 참조만 가능하며, 내부적으로 `std::vector::push_back`함수를 호출한다.
 
-소스코드의 나머지 부분은 `data`에 저장된 파일의 내용을 `std::cout`에 출력하는 부분이다.
+소스코드의 나머지 부분은 `data` 변수에 저장된 파일의 내용을 `std::cout`에 출력하는 부분이다.
 
 - // row 0, column 0 : empty  
-    `std::string(size_t n, char c)` 생성자는 `c` 문자가 `n`만큼 반복되는 스트링을 만든다. 예를 들어 `std::strig(12, ' ')`를 호출하면 공백문자만 가득 찬 길이 12의 스트링이 만들어진다
+    `std::string(size_t n, char c)` 생성자는 `c` 문자가 `n`만큼 반복되는 스트링을 만든다. 예를 들어 `std::string(12, ' ')`를 호출하면 공백문자만 가득 찬 길이 12의 스트링이 만들어진다
 
 - // row 1, column 0 : second to the most significant digit index  .  
     숫자를 출력할 때 16진법으로 출력하려면 `<iomanip>`헤더의 `std::hex`를 사용한다. 다시 10진법으로 돌아가려면, `std::dec`을 사용한다.  
@@ -192,7 +198,171 @@ std::cout << std::hex << static_cast<unsigned int>('\255') && 0xff; // 출력: f
 - // row 1, column 1 : bytes in hexadecimal display  
     `std::cout`에 출력하기 전에 `unsigned int`로 캐스팅하여 숫자로써 출력한다.  
     `std::hex`나 `std::setfill`은 `std::cout`의 플래그로 저장되며 해당 플래그는 `std::cout.flags()`메소드로 확인할 수 있다.  
-    한 번 적용된 플래그는 그대로 남기 때문에 다음 출력에 영향을 미친다. 그렇기 때문에 숫자를 출력할 때 마다 항상 다시 `std::dec`, `std::hex`, `std::setfill`, `std::setw`를 다시 사용해야 한다.
+    한 번 적용된 플래그는 출력이 끝난 후에도 그대로 남기 때문에 다음 출력에 영향을 미친다. 그렇기 때문에 숫자를 출력할 때 마다 매번 다시 `std::dec`, `std::hex`, `std::setfill`, `std::setw`를 다시 사용해야 한다.
 
 - // row 1, column 2 : bytes in string display  
-    `<cctype>` 헤더의 `std::isprint`함수를 사용해 출력 가능한 ASCII 문자인지 확인할 수 있다.
+    `<cctype>` 헤더의 `std::isprint`함수를 사용해 출력 가능한 ASCII 문자인지 확인할 수 있다. 출력할 수 있는 문자의 목록은 다음과 같으며 띄어쓰기, 탭, 새 줄과 같은 공백 문자는 포함하지 않는다.
+
+    ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~
+
+### CopyFile
+
+이 프로그램은 명령줄 인수로 두 개의 파일 경로를 받는다. 첫 번째 파일 경로는 복사하고 싶은 파일, 두 번째 파일 경로는 복사한 결과 생겨날 파일의 이름이다.
+
+```c++
+// CopyFile.cpp
+#include <iostream>
+#include <fstream>
+
+int main(int argc, char** argv)
+{
+    if( argc < 3 )
+    {
+        std::cout << "usage : CopyFile [source filename] [destination filename]" << std::endl;
+        return 0;
+    }
+
+    const char* const sourceFilename = argv[1];
+    const char* const destinationFilename = argv[2];
+    std::ifstream ifs(sourceFilename);
+    if(ifs)
+    {
+        std::ofstream ofs(destinationFilename);
+        if( ofs )
+        {
+            std::copy(
+                std::istreambuf_iterator<char>(ifs),
+                std::istreambuf_iterator<char>(),
+                std::ostreambuf_iterator<char>(ofs)
+            );
+        }
+        else
+        {
+            std::cerr << destinationFilename << " could not be opened for writing" << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << sourceFilename << " could not be opened for reading." << std::endl;
+    }
+    return 0;
+}
+```
+
+[PipePrint](#PipePrint)와 동일한 코드를 사용하지만 `std::istreambuf_iterator`, `std::ostreambuf_iterator`의 생성자에 `std::cin`과 `std::cout` 대신에 `std::ifstream`과 `std::ofsteram` 객체를 제공한다.
+
+### FileSize
+
+이 프로그램은 파일 이름을 명령줄 인수로 받아 파일의 크기를 여러 단위로 표시한다.
+
+```c++
+// FileSize.cpp
+#include <iostream>
+#include <fstream>
+
+int main(int argc, char** argv)
+{
+    if( argc < 2 )
+    {
+        std::cout << "usage : FileSize [filename]" << std::endl;
+        return 0;
+    }
+
+    const char* filename = argv[1];
+    std::ifstream ifs(filename, std::ios_base::binary);
+    if( ifs )
+    {
+        ifs.seekg(0, std::ios_base::end);
+        std::streampos sizeInBytes = ifs.tellg();
+        std::cout
+            << "* file : " << filename << std::endl
+            << "  - size in bits : " << sizeInBytes * 8 << std::endl
+            << "  - size in bytes : " << sizeInBytes << std::endl
+            << "  - size in kilo bytes : " << sizeInBytes / 1024.0 << std::endl
+            << "  - size in mega bytes : " << sizeInBytes / (1024 * 1024.0) << std::endl
+            << "  - size in giga bytes : " << sizeInBytes / (1024 * 1024 * 1024.0) << std::endl;
+    }
+    else
+    {
+        std::cerr << filename << " could not be opened for reading." << std::endl;
+    }
+    return 0;
+}
+```
+
+`std::basic_istream::seekg` 함수는 스트림이 다음에 읽어들일 스트림 버퍼 내의 위치를 정하는 함수이다. `(0, std::ios_base::end)`를 인수로 제공할 경우 끝에서 부터 0만큼 떨어진 곳의 위치로 이동한다. 만약 이 때 `std::ifstream::get` 함수를 호출하면 `eof`를 반환한다.
+
+`std::ifstream::tellg`는 스트림 내에서 다음에 읽을 문자의 위치를 알려준다. `eof`의 위치는 스트림의 끝이므로 그 위치가 바로 스트림의 크기를 나타낸다.
+
+### FileEqual
+
+이 프로그램은 두 파일을 명령줄 인수로 받아서, 두 파일의 내용이 서로 동일한지 확인한다.
+
+```c++
+// FileEqual.cpp
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
+int main(int argc, char** argv)
+{
+    if( argc < 2 )
+    {
+        std::cout << "usage : FileEqual [filename1] [filename2]" << std::endl;
+        return 0;
+    }
+    
+    const char* const filename1 = argv[1];
+    const char* const filename2 = argv[2];
+    std::ifstream ifs(filename1, std::ios_base::binary);
+    if(ifs)
+    {
+        std::ifstream ifs2(filename2, std::ios_base::binary);
+        if( ifs2 )
+        {
+            std::streampos size1;
+            ifs.seekg(0, std::ios_base::end);
+            size1 = ifs.tellg();
+            ifs.seekg(0, std::ios_base::beg);
+
+            std::streampos size2;
+            ifs2.seekg(0, std::ios_base::end);
+            size2 = ifs2.tellg();
+            ifs2.seekg(0, std::ios_base::beg);
+
+            if( size1 != size2 )
+            {
+                std::cout << "the two files are different in size." << std::endl;
+            }
+            else if( std::equal(
+                std::istreambuf_iterator<char>(ifs),
+                std::istreambuf_iterator<char>(),
+                std::istreambuf_iterator<char>(ifs2))
+            )
+            {
+                std::cout << "the two files are equal." << std::endl;
+            }
+            else
+            {
+                std::cout << "the two files are different." << std::endl;
+            }
+        }
+        else
+        {
+            std::cerr << filename2 << " could not be opened for reading." << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << filename1 << " could not be opened for reading." << std::endl;
+    }
+    return 0;
+}
+
+```
+
+각 두 파일의 크기를 먼저 [FileSize](#FileSize) 예시에서 했던 것과 같은 방법으로 구한다. 두 파일의 크기가 서로 다른 경우 파일이 서로 다르다고 판단한다.
+
+만약 두 파일의 크기가 서로 같다면 내용이 같은지를 확인해야 하기 때문에 `seekg(0, std::ios_base::beg)`를 호출해 각 스트림의 위치를 맨 처음 위치로 되돌린다.
+
+`std::equal(first1, last1, first2)`는 `first1`과 `last1` 사이에 있는 원소가 `first2`에서 부터 동일하게 나타나는가 확인한다.
