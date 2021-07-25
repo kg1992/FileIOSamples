@@ -2,13 +2,41 @@
 
 ## 빌드
 
-윈도우즈의 경우 build.bat을 실행하면 build/debug 디렉토리에 실행파일이 생긴다.
+빌드 시 [CMakeLists.txt](src/CMakeLists.txt)에서 지정한 번호 이상의 cmake가 설치되어 있어야 한다. 최상위 소스 디렉토리는 [src](src/)이다. 각각의 예시에 대해 하나씩 타겟이 있으며 각 타겟은 실행파일을 하나 생성한다. 빌드가 완료되고 나면 src 디렉토리의 모든 테스트용 파일을 실행파일 위치로 복사한다.
 
-유닉스의 경우 build.sh를 실행하면 linux 디렉토리에 실행파일이 생긴다.
+### 윈도우즈
 
-프로젝트는 cmake를 사용하며, 최상위 소스 디렉토리는 src이다. 각각의 예시에 대해 하나씩 타겟이 있으며 각 타겟은 실행파일을 하나 생성한다. 빌드가 완료되고 나면 src 디렉토리의 모든 테스트용 파일을 실행파일 위치로 복사한다.
+[build.bat](build.bat)을 실행하면 win32/debug 디렉토리에 실행파일이 생성된다.
 
-run.bat은 각각의 실행파일을 1초에 하나 씩 실행시켜준다.
+```cmd
+C:\projects\FileIOSamples> build
+C:\projects\FileIOSamples> cd win32/debug
+C:\projects\FileIOSamples> dir /b
+```
+
+[run.bat](run.bat)을 실행하여 각각의 실행파일을 일괄적으로 실행해보고 결과를 확인할 수 있다.
+
+```cmd
+C:\projects\FileIOSamples> run
+```
+
+## WSL
+
+WSL에서 빌드할 수 있다.
+
+[build.sh](build.sh)를 실행하면 linux 디렉토리에 실행파일이 생긴다.
+
+```shell
+usrname@PCNAME:/mnt/c/Projects/FileIOSamples$ ./build.sh
+usrname@PCNAME:/mnt/c/Projects/FileIOSamples$ cd linux
+usrname@PCNAME:/mnt/c/Projects/FileIOSamples$ ls
+```
+
+[run.sh](run.sh)를 실행하면 각각의 실행파일을 일괄적으로 실행해보고 결과를 확인할 수 있다.
+
+```shell
+usrname@PCNAME:/mnt/c/Projects/FileIOSamples$ ./run.sh
+```
 
 ## 예시
 
@@ -39,7 +67,7 @@ int main()
 
 `std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해 넣는 알고리즘이다.
 
-`std::istreambuf_iterator`의 생성자는 `std::basic_istream` 객체를 받는다. 이터레이터를 참조하면 `std::basic_istream`와 연관된 스트림 객체의 `std::basic_sterambuf::sgetc` 함수를 호출해 얻은 문자를 반환한다. 
+`std::istreambuf_iterator`의 생성자는 `std::basic_istream` 객체를 받는다. 이터레이터를 참조하면 `std::basic_istream`와 연관된 스트림 객체의 `std::basic_sterambuf::sgetc` 함수를 호출해 얻은 문자를 반환한다.
 
 `std::istreambuf_iterator::operator++`을 호출하면 내부적으로 `std::basic_sterambuf::sbumpc`를 호출해 스트림 버퍼 내에서의 위치를 한 칸 이동시킨다. `sgetc`와 `sbumpc`는 둘 다 문자를 스트림 버퍼에서 얻는 함수지만. `istream`의 `peek`과 `get`의 관계와 같이 전자는 버퍼 내에서의 위치를 옮기지 않고 후자는 버퍼 내에서의 위치를 한 칸 옮긴다.
 
