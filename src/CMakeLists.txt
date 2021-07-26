@@ -11,6 +11,7 @@ add_executable(ReadBinaryPrintHex ReadBinaryPrintHex.cpp)
 add_executable(CopyFile CopyFile.cpp)
 add_executable(FileSize FileSize.cpp)
 add_executable(FileEqual FileEqual.cpp)
+add_executable(PODToBinaryFile PODToBinaryFile.cpp)
 
 message(STATUS ${CMAKE_CXX_COMPILER_ID})
 message(STATUS ${CMAKE_CXX_COMPILER_VERSION})

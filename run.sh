@@ -52,4 +52,10 @@ sleep 1
 echo
 sleep 1
 
+echo "PODToBinaryFile"
+sleep 1
+./PODToBinaryFile
+echo
+sleep 1
+
 popd

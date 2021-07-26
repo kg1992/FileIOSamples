@@ -1,5 +1,18 @@
 # FileIOSamples
 
+- [FileIOSamples](#fileiosamples)
+  - [빌드](#빌드)
+    - [윈도우즈](#윈도우즈)
+    - [WSL](#wsl)
+  - [예시](#예시)
+    - [PipePrint](#pipeprint)
+    - [ReadPrint](#readprint)
+    - [ReadBinaryPrintHex](#readbinaryprinthex)
+    - [CopyFile](#copyfile)
+    - [FileSize](#filesize)
+    - [FileEqual](#fileequal)
+    - [PODToBinaryFile](#podtobinaryfile)
+
 ## 빌드
 
 빌드 시 [CMakeLists.txt](src/CMakeLists.txt)에서 지정한 번호 이상의 cmake가 설치되어 있어야 한다. 최상위 소스 디렉토리는 [src](src/)이다. 각각의 예시에 대해 하나씩 타겟이 있으며 각 타겟은 실행파일을 하나 생성한다. 빌드가 완료되고 나면 src 디렉토리의 모든 테스트용 파일을 실행파일 위치로 복사한다.
@@ -20,7 +33,7 @@ C:\projects\FileIOSamples> dir /b
 C:\projects\FileIOSamples> run
 ```
 
-## WSL
+### WSL
 
 WSL에서 빌드할 수 있다.
 
@@ -394,3 +407,79 @@ int main(int argc, char** argv)
 만약 두 파일의 크기가 서로 같다면 내용이 같은지를 확인해야 하기 때문에 `seekg(0, std::ios_base::beg)`를 호출해 각 스트림의 위치를 맨 처음 위치로 되돌린다.
 
 `std::equal(first1, last1, first2)`는 `first1`과 `last1` 사이에 있는 원소가 `first2`에서 부터 동일하게 나타나는가 확인한다.
+
+### PODToBinaryFile
+
+이 프로그램은 PackedPOD.bin 파일을 만들고 구조체를 파일에 그대로 써넣는다. 그런 다음 다시 읽어들여 파일의 내용과 원래 구조체의 내용이 서로 일치하는지 확인하고 일치하면 "success.", 실패하면 "fail."을 출력한다.
+
+```c++
+// PODToBinaryFile
+#include <iostream>
+#include <fstream>
+
+#pragma pack(push, 1)
+
+struct PackedPOD
+{
+    int a;
+    char b;
+    double c;
+};
+
+#pragma pack(pop)
+
+int main()
+{
+    const char* outFilename = "PackedPOD.bin";
+
+    PackedPOD pod = {1, 'a', 3.14159};
+    std::ofstream ofs(outFilename, std::ios_base::binary);
+    if( ofs )
+    {
+        ofs.write(reinterpret_cast<const char*>(&pod), sizeof(pod));
+        ofs.close();
+    }
+    else
+    {
+        std::cerr << outFilename << " could not be opened for writing.";
+    }
+
+    std::ifstream ifs(outFilename, std::ios_base::binary);
+    if( ifs )
+    {
+        PackedPOD pod2;
+        ifs.read(reinterpret_cast<char*>(&pod2), sizeof(pod2));
+        
+        if( !std::memcmp(&pod, &pod2, sizeof(PackedPOD)))
+        {
+            std::cout << "success." << std::endl;
+        }
+        else
+        {
+            std::cout << "fail." << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << outFilename << " could not be opened for reading.";
+    }
+
+    return 0;
+}
+```
+
+`std::ofstream::write(s, n)`은 `s`부터 시작하는 문자열을 `n`개 출력한다. 중간에 null 캐릭터가 있어도 멈추지 않으며, `n`은 정확한 배열의 크기와 쓰여질 데이터의 크기와 같다.
+
+`std::ofstream::read(s, n)`은 스트림에서 `n`개의 바이트를 읽어 `s`에 순서대로 가져온다. 이 때에도 중간에 null 캐릭터가 있어도 멈추지 않으며, `s` 배열의 크기는 정확히 `n`이면 충분하다.
+
+`&pod`와 같이 구조체의 주소를 얻으면 구조체의 맨 첫번째 멤버 변수의 주소를 얻는다. `reinterpret_cast`를 사용하여 구조체의 주소를 `const char*`로 캐스팅하여 단순한 바이트의 배열로 취급하고 `write` `read` 함수의 인수로 제공할 수 있다.
+
+이러한 방식으로 데이터를 저장하는 경우를 `Unformatted I/O`라고 한다. 사용자가 읽기 어렵지만 컴퓨터가 사용하기 편한 방식으로 저장하는 것이다.
+
+unformatted I/O를 하는 경우 컴퓨터의 구현에 따라 같은 코드에서 서로 다른 내용의 데이터가 생길 수도 있다. 예를 들어 빅 엔디안 PC에서 `int a = 1;`을 저장할 경우 `00 00 00 01`이 저장되지만 리틀 엔디안 PC에서 같은 데이터를 저장할 경우 `01 00 00 00`이 생긴다. unformatted I/O 를 사용할 경우:
+
+1. 오직 자기 PC에서 생성한 파일 만을 사용하거나
+2. 파일 형식에 따라 바이트 오더를 지정하거나 (예를 들어 BSON파일은 리틀 엔디안일 것을 권장한다)
+3. 바이트 오더를 알 수 있는 힌트를 제시해야 한다 (예를 들어 UTF-16 유니코드 텍스트 문서는 BOM가 맨 처음에 온다)
+
+`<cstring>` 헤더의 `std::memcmp(ptr1, ptr2, num)`는 주어진 `ptr1`, `ptr2`에서 시작하는 `num` 크기의 바이트 배열이 서로 일치하는지 확인한다. 일치할 경우 0을 반환한다. 서로 일치하지 않을 경우 처음으로 일치하지 않는 첫 번째 바이트의 차이(`ptr1[i] - ptr2[i]`)를 반환한다.
