@@ -1,0 +1,3 @@
+a|b|c|d|1000
+Code|The Hidden Language of Computer Hardware and Software|Charles Petzold|Microsfot|2000
+Effective C++|55 SPecific Ways to Improve Your Programs and Designs|Scott Meyers|O'Reilly Media|2014

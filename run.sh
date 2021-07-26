@@ -58,4 +58,10 @@ sleep 1
 echo
 sleep 1
 
+echo "type BookCommands.txt | Book"
+sleep 1
+cat BookCommands.txt | ./Book
+echo
+sleep 1
+
 popd

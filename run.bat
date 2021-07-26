@@ -60,4 +60,10 @@ PODToBinaryFile
 echo.
 timeout 1 > nul
 
+echo "type BookCommands.txt | ./Book"
+timeout 1 > Nul
+type BookCommands.txt | ./Book
+echo.
+timeout 1 > nul
+
 popd

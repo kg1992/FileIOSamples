@@ -12,6 +12,7 @@
     - [FileSize](#filesize)
     - [FileEqual](#fileequal)
     - [PODToBinaryFile](#podtobinaryfile)
+    - [Book](#book)
 
 ## 빌드
 
@@ -474,12 +475,186 @@ int main()
 
 `&pod`와 같이 구조체의 주소를 얻으면 구조체의 맨 첫번째 멤버 변수의 주소를 얻는다. `reinterpret_cast`를 사용하여 구조체의 주소를 `const char*`로 캐스팅하여 단순한 바이트의 배열로 취급하고 `write` `read` 함수의 인수로 제공할 수 있다.
 
-이러한 방식으로 데이터를 저장하는 경우를 `Unformatted I/O`라고 한다. 사용자가 읽기 어렵지만 컴퓨터가 사용하기 편한 방식으로 저장하는 것이다.
+이러한 방식으로 바이너리 데이터를 직접 파일에 입출력 하는 경우를 **Unformatted I/O**라고 한다. 사용자가 읽기 어렵지만 컴퓨터가 사용하기 편한 방식으로 저장하는 것이다.
 
-unformatted I/O를 하는 경우 컴퓨터의 구현에 따라 같은 코드에서 서로 다른 내용의 데이터가 생길 수도 있다. 예를 들어 빅 엔디안 PC에서 `int a = 1;`을 저장할 경우 `00 00 00 01`이 저장되지만 리틀 엔디안 PC에서 같은 데이터를 저장할 경우 `01 00 00 00`이 생긴다. unformatted I/O 를 사용할 경우:
+unformatted I/O를 하는 경우 컴퓨터의 구현에 따라 같은 코드에서 서로 다른 내용의 데이터가 생길 수도 있다. 예를 들어 빅 엔디안 PC에서 `int a = 1;`을 저장할 경우 `00 00 00 01`이 저장되지만 리틀 엔디안 PC에서 같은 데이터를 저장할 경우 `01 00 00 00`이 생긴다. 따라서 Unformatted I/O 를 사용할 경우:
 
 1. 오직 자기 PC에서 생성한 파일 만을 사용하거나
 2. 파일 형식에 따라 바이트 오더를 지정하거나 (예를 들어 BSON파일은 리틀 엔디안일 것을 권장한다)
 3. 바이트 오더를 알 수 있는 힌트를 제시해야 한다 (예를 들어 UTF-16 유니코드 텍스트 문서는 BOM가 맨 처음에 온다)
 
 `<cstring>` 헤더의 `std::memcmp(ptr1, ptr2, num)`는 주어진 `ptr1`, `ptr2`에서 시작하는 `num` 크기의 바이트 배열이 서로 일치하는지 확인한다. 일치할 경우 0을 반환한다. 서로 일치하지 않을 경우 처음으로 일치하지 않는 첫 번째 바이트의 차이(`ptr1[i] - ptr2[i]`)를 반환한다.
+
+### Book
+
+이 프로그램은 사용자로부터 명령을 입력받아 텍스트 파일에 저장된 책의 목록을 수정한다.
+
+```c++
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+
+struct Book
+{
+    char title[128];
+    char subtitle[256];
+    char author[128];
+    char publisher[128];
+    int publishYear;
+};
+
+std::istream& operator>>(std::istream& is, Book& book)
+{
+    char c;
+    is >> c;
+    is.unget();
+    is.getline(book.title, sizeof(book.title), '|');
+    is.getline(book.subtitle, sizeof(book.subtitle), '|');
+    is.getline(book.author, sizeof(book.author), '|');
+    is.getline(book.publisher, sizeof(book.publisher), '|');
+    is >> book.publishYear;
+    return is;
+}
+
+std::ostream& operator<<(std::ostream& os, const Book& book)
+{
+    return os
+    << book.title << '|'
+    << book.subtitle << '|'
+    << book.author << '|'
+    << book.publisher << '|'
+    << book.publishYear;
+}
+
+int main()
+{    
+    const char* filename = "Books.txt";
+    std::cout << "input command. input ctrl+z to stop:" << std::endl;
+    std::vector<Book> books;
+    std::string command;
+    while( std::cin >> command )
+    {
+        if( command == "load" )
+        {
+            std::vector<Book> loaded;
+            std::cout << "  * load" << std::endl;
+            std::ifstream ifs(filename);
+            Book book;
+            while(ifs && !ifs.eof())
+            {
+                ifs >> book;
+                if( ifs )
+                {
+                    loaded.push_back(book);
+                }
+            }
+            books.swap(loaded);
+            std::cout << "    - loaded"<< std::endl;
+        }
+        else if( command == "list")
+        {
+            std::cout << "  * list" << std::endl;
+            for( const Book& book : books )
+            {
+                std::cout << "    - " << book << std::endl;
+            }
+        }
+        else if( command == "add")
+        {
+            std::cout << "  * add" << std::endl;
+            Book book;
+            std::cout << "    - input book:" << std::endl;
+            std::cin >> book;
+            books.push_back(book);
+            std::cout << "    - added " << book.title << std::endl;
+        }
+        else if (command == "remove" )
+        {
+            std::cout << "  * remove" << std::endl;
+            std::string title;
+            std::cout << "    - title of the book to be removed:" << std::endl;
+            std::cin >> title;
+            books.erase(
+                std::remove_if(
+                    books.begin(), 
+                    books.end(), 
+                    [&](const Book& book){return book.title == title;}
+                ),
+                books.end()
+            );
+            std::cout << "    - removed. " << books.size() << " books remaining." << std::endl;
+        }
+        else if( command == "save")
+        {
+            std::cout << "  * save" << std::endl;
+            std::ofstream ofs(filename);
+            if( ofs )
+            {
+                for( const Book& book : books )
+                {
+                    ofs << book << std::endl;
+                }
+                std::cout << "    - saved to " << filename << '.' << std::endl;
+            }
+        }
+        else if( command == "quit" )
+        {
+            break;
+        }
+    }
+    return 0;
+}
+```
+
+```text
+load
+list
+remove a
+list
+add C Primer Plus||Stephen Prata||2013
+save
+load
+list
+```
+
+```cmd
+C:\Projects\FileIOSamples\win32\debug>type BookCommands.txt | Book.exe
+input command. input ctrl+z to stop:
+  * load
+    - loaded
+  * list
+    - a|b|c|d|1000
+    - Code|The Hidden Language of Computer Hardware and Software|Charles Petzold|Microsfot|2000
+    - Effective C++|55 SPecific Ways to Improve Your Programs and Designs|Scott Meyers|O'Reilly Media|2014
+  * remove
+    - title of the book to be removed:
+    - removed. 2 books remaining.
+  * list
+    - Code|The Hidden Language of Computer Hardware and Software|Charles Petzold|Microsfot|2000
+    - Effective C++|55 SPecific Ways to Improve Your Programs and Designs|Scott Meyers|O'Reilly Media|2014
+  * add
+    - input book:
+    - added C Primer Plus
+  * save
+    - saved to Books.txt.
+  * load
+    - loaded
+  * list
+    - Code|The Hidden Language of Computer Hardware and Software|Charles Petzold|Microsfot|2000
+    - Effective C++|55 SPecific Ways to Improve Your Programs and Designs|Scott Meyers|O'Reilly Media|2014
+    - C Primer Plus||Stephen Prata||2013
+```
+
+`operator>>` `operator<<`를 스트림 입출력에 사용하기 위해 오버로딩 하는 경우 지켜야할 규칙이 있다:
+
+   1. `istream`의 경우 `operator>>`를 오버로딩한다. `ostream`의 경우 `operator<<`를 오버로딩 한다.
+   2. 첫 번째 인수는 스트림 객체의 참조를 받는다.
+   3. 첫 번째 인수로 전달받은 스트림 참조를 그대로 반환한다.
+   4. 만약 작업에 실패한 경우 `std::ios_base::failbit`를 설정해야 한다.
+
+1번, 2번, 3번은 함수 호출을 연결할 수 있게 만들기 위해 필요한 조건이다. `std::cout << 1 << 2 << 3;`이 작동할 수 있는 이유는 `std::cout << 1`을 연산한 결과 `std::cout`이 그 자리에 그대로 반환되기 때문이다.
+4번은 입출력 작업을 하는 사용자가 입출력 작업이 제대로 수행되었는지 확인하기 위해 필요한 것이다. 또한 failbit나 eof가 설정된 경우 나머지 입출력 작업은 모두 자동으로 무시된다.
+
+데이터가 저장되는 Books.txt는 하는 방법만 안다면 메모장으로 열어도 쉽게 내용을 수정할 수 있다.
