@@ -64,4 +64,26 @@ cat BookCommands.txt | ./Book
 echo
 sleep 1
 
+echo "DeleteFile DeleteMe.txt"
+sleep 1
+./DeleteFile aaaa
+echo
+sleep 1
+
+echo "echo delete me! > DeleteMe.txt"
+echo "DeleteFile TextCopy.txt"
+sleep 1
+echo delete me! > DeleteMe.txt
+./DeleteFile DeleteMe.txt
+echo
+sleep 1
+
+echo "echo rename me! > RenameMe.txt"
+echo "RenameFile RenameMe.txt Renamed.txt"
+sleep 1
+echo rename me! > RenameMe.txt
+./RenameFile RenameMe.txt Renamed.txt
+echo
+sleep 1
+
 popd

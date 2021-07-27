@@ -13,6 +13,13 @@ add_executable(FileSize FileSize.cpp)
 add_executable(FileEqual FileEqual.cpp)
 add_executable(PODToBinaryFile PODToBinaryFile.cpp)
 add_executable(Book Book.cpp)
+add_executable(DeleteFile DeleteFile.cpp)
+add_executable(RenameFile RenameFile.cpp)
+if(MSVC)
+add_executable(MoveToRecycleBinA MoveToRecycleBin.cpp)
+add_executable(MoveToRecycleBinW MoveToRecycleBin.cpp)
+target_compile_definitions (MoveToRecycleBinW PRIVATE -D_UNICODE -DUNICODE)
+endif()
 
 message(STATUS ${CMAKE_CXX_COMPILER_ID})
 message(STATUS ${CMAKE_CXX_COMPILER_VERSION})
@@ -32,5 +39,6 @@ if(MSVC)
     file(COPY ${MY_TEST_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
     file(COPY ${MY_TEST_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release)
 endif()
+
 
 

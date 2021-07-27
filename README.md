@@ -13,6 +13,9 @@
     - [FileEqual](#fileequal)
     - [PODToBinaryFile](#podtobinaryfile)
     - [Book](#book)
+    - [DeleteFile](#deletefile)
+    - [MoveTORecycleBin](#movetorecyclebin)
+    - [RenameFile](#renamefile)
 
 ## 빌드
 
@@ -87,7 +90,7 @@ int main()
 
 기본생성자로 만들어진 `std::istremabuf_iterator`는 `end of stream` 이터레이터라고 하며, 끝을 지정해야 하는 곳에 대신 쓸 수 있다. `operator++`은 `sbumpc()`를 부른 결과 `eof` 문자가 반환 된 경우 자기 자신을 `end of stream` 이터레이터로 초기화 한다.
 
-`std::ostreambuf_iterator`의 새성자는 `std::basic_ostream`객체를 받는다. 이터레이터를 참조하면 `operator=`를 정의하는 프록시 클래스를 반환한다. 프록시 클래스에 문자를 배정하면 내부적으로 `std::basic_streambuf::sputc`함수를 불러 문자를 스트림 버퍼에 하나 써넣는다.
+`std::ostreambuf_iterator`의 생성자는 `std::basic_ostream`객체를 받는다. 이터레이터를 참조하면 `operator=`를 정의하는 프록시 클래스를 반환한다. 프록시 클래스에 문자를 배정하면 내부적으로 `std::basic_streambuf::sputc`함수를 불러 문자를 스트림 버퍼에 하나 써넣는다.
 
 `std::ostreambuf_iterator::operator++`은 정의되어 있지만 호출해도 위치가 실제로 바뀌지는 않고 바로 `*this`를 반환한다.
 
@@ -658,3 +661,199 @@ input command. input ctrl+z to stop:
 4번은 입출력 작업을 하는 사용자가 입출력 작업이 제대로 수행되었는지 확인하기 위해 필요한 것이다. 또한 failbit나 eof가 설정된 경우 나머지 입출력 작업은 모두 자동으로 무시된다.
 
 데이터가 저장되는 Books.txt는 하는 방법만 안다면 메모장으로 열어도 쉽게 내용을 수정할 수 있다.
+
+### DeleteFile
+
+이 프로그램은 파일을 명령줄 인수로 받아서 파일을 영원히 삭제한다.
+
+```c++
+// DeleteFile.cpp
+#include <cstdio>
+#include <cerrno>
+
+int main(int argc, char** argv)
+{
+    if( argc < 2 )
+    {
+        std::puts("usage : DeleteFile [filename]");
+        return 0;
+    }
+
+    const char* filename = argv[1];
+    if( std::remove(filename) != 0 )
+    {
+        if( errno == ENOENT )
+        {
+            std::fprintf(stderr, "error: no entry; %s was not found.\n", filename);
+        }
+        else if( errno == EACCES )
+        {
+            std::fprintf(stderr, "error: no access; process has no writing access right to %s.\n", filename);
+        }
+        else
+        {
+            std::fprintf(stderr, "error: %d.\n", errno);
+        }
+        return 1;
+    }
+    else
+    {
+        std::printf("deleted %s.\n", filename);
+    }
+
+    return 0;
+}
+```
+
+`<cstdio>`헤더를 `<iostream>`헤더 대신에 사용해 콘솔, 파일 입출력을 수행할 수 있다.
+
+- `std::puts`를 사용해 `stdout` 스트림에 문자열을 한 줄 써넣을 수 있다. 마지막에 자동으로 새 줄 문자를 붙여준다. 이것은 `std::cout`에 출력하는 것과 같다.
+- `std::printf`를 사용해 `stdout` 스트림에 문자열을 포맷팅하여 써넣을 수 있다. 이것은 `std::cout`에 출력하는 것과 같다.
+- `std::fprintf`를 `stderr`과 함께 사용해 `stderr` 스트림에 문자열을 포맷팅하여 써넣을 수 있다. 이것은 `std::cerr`에 출력하는 것과 같다.
+
+`<cstdio>`헤더의 `std::remove(filename)` 함수를 사용해서 파일을 삭제할 수 있다. `std::remove` 함수는 삭제에 성공하면 0을 반환하고 성공하지 못하면 0이 아닌 수를 반환하면서 `<cerror>` 헤더의 `errno` 전역변수를 실패한 이유에 맞게 설정한다.
+
+- `errno`가 `ENOENT`인 경우 지정된 경로에서 파일을 찾지 못한 경우이다.
+- `errno`가 `EACCES`인 경우 파일을 찾기는 했지만 파일을 삭제할 권한이 없음을 의미한다.
+
+### MoveTORecycleBin
+
+이 프로그램은 파일을 명령줄 인수로 받아서 휴지통으로 옮긴다. 윈도우즈에서만 빌드할 수 있다.
+
+```c++
+// MoveToRecycleBin.cpp
+#include <Windows.h>
+#include <shlwapi.h>
+#include <tchar.h>
+#include <iostream>
+
+#pragma comment (lib, "Shlwapi.lib")
+
+#ifdef UNICODE
+#define MY_MAX_PATH 32767
+#else
+#define MY_MAX_PATH MAX_PATH // 260
+#endif
+
+int _tmain(int argc, TCHAR** argv)
+{
+    if( argc < 2 )
+    {
+        std::cout << "usage : MoveToRecycleBin [filename]" << std::endl;
+        return 0;
+    }
+
+    TCHAR* filename = argv[1];
+    TCHAR fullFilename[MY_MAX_PATH + 1] = {'\0'};
+    if( PathIsRelative(filename))
+    {
+        GetFullPathName(
+            filename, // convert this path to absolute path
+            MY_MAX_PATH, // path maximum
+            fullFilename, // output buffer for absolute path
+            NULL // no thanks. don't output path part
+        );
+    }
+
+    SHFILEOPSTRUCT f;
+    ZeroMemory(&f,sizeof(SHFILEOPSTRUCT));
+    f.wFunc = FO_DELETE; // delete the file
+    f.fFlags = FOF_ALLOWUNDO; // don't delete permanently; move to recycle bin instead.
+    f.pFrom = fullFilename; // delete 'fullFilename'. official documentation suggests that you should use absolute path for thread safty.
+    int result;
+    if( result = SHFileOperation(&f))
+    {
+        if( result == ERROR_FILE_NOT_FOUND )
+        {
+            std::cerr << "error: file not found." << std::endl;
+        }
+        else if( result == ERROR_INVALID_PARAMETER )
+        {
+            std::cerr << "error: invalid parameter." << std::endl;
+        }
+        else
+        {
+            std::cerr << "error: " << result << std::endl;
+        }
+        return result;
+    }
+    else if(f.fAnyOperationsAborted)
+    {
+        std::cout << "operation aborted. user canceled." << std::endl;
+    }
+    else
+    {
+        std::cout << "file moved to recycle bin." << std::endl;
+    }
+    return 0;
+}
+```
+
+이 예시는 `<Windows.h>`헤더에 있는 함수를 사용한다.
+
+`<Windows.h>`의 구조체와 함수들은 `chracter-set`설정에 따라 정의되는 `_UNICODE`가 있는지 확인하고 함수를 ANSI버전과 WIDECHAR 버전 둘 중 하나를 자동으로 선택한다.
+
+예를 들어 `<tchar>`헤더의 `_tmain`은 `_UNICODE` 매크로가 설정되어 있는가에 따라 자동으로 `main`과 `wmain`사이에서 한 함수를 골라준다.
+
+`SHFILEOPSTRUCT::pFrom`은 `double null-terminated` 스트링이다. `null-terminated`된 스트링이 여러개 들어갈 수 있고, 그 끝을 나타낼 때는 두 개의 null 캐릭터를 연속해서 써야 한다. 따라서 `pFrom`에 지정해줄 `fullFilename` 배열을 선언할 때 크기를 `MY_MAX_PATH` 더하기 2를 지정했다.
+
+`PathIsRelative`는 주어진 경로가 상대경로인지 절대경로인지 확인한다.
+
+`GetFullPathName`은 A버전인가 W버전인가에 따라 읽어들이거나 출력할 수 있는 문자열의 최대 길이에 각각 제한이 있다. 전자는 260이고 후자는 32767이다. 이 매크로는 `MY_MAX_PATH` 매크로를 사용해 서로 다르게 정의한다.
+
+`SHFileOperation`은 성공하면 0, 실패하면 0이 아닌 값을 반환한다. 에러 코드를 설정하지 않기 때문에 `GetLastError`를 사용하는 대신 반환된 값을 `<WinError.h>`헤더의 에러코드와 비교해야 한다.
+
+주의할 점은 프로그램의 사용자가 직접 작업을 취소할 것을 요청한 경우는 에러로 보지 않고, 대신 `SHFILEOPSTRUCT::fAnyOperationsAborted`를 `true`로 설정한다는 것이다.
+
+또한 적절한 수정 권한이 없어서 휴지통으로 옮길 수 없었어도 아무런 에러를 발생시키지 않고 조용히 작업을 종료한다.
+
+참고: <https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-shfileopstructa>
+참고: <https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shfileoperationa>
+
+공식 문서에 따르면 `IFileOperation` 클래스가 이 기능을 대체할 것이라고 한다.
+
+### RenameFile
+
+이 프로그램은 명령줄 인수로 파일과 새로운 이름을 받아 이름을 바꾼다. 새로운 이름에 경로를 포함시켜 새로운 경로로 파일을 옮길 수도 있다.
+
+```c++
+// RenameFile.cpp
+#include <cstdio>
+#include <cerrno>
+
+int main(int argc, char** argv)
+{
+    if( argc < 3 )
+    {
+        std::puts("usage : RenameFile [source filename] [destination filename]");
+        return 0;
+    }
+
+    const char* src = argv[1];
+    const char* dst = argv[2];
+    if( std::rename(src, dst) != 0 )
+    {
+        if( errno == ENOENT )
+        {
+            std::fprintf(stderr, "error: no entry; %s was not found.\n", src);
+        }
+        else if( errno == EACCES )
+        {
+            std::fprintf(stderr, "error: no access; process has no reading access to %s or writing access right to %s.\n", src, dst);
+        }
+        else
+        {
+            std::fprintf(stderr, "error: %d.\n", errno);
+        }
+        return 1;
+    }
+    else
+    {
+        std::printf("renamed %s to %s.\n", src, dst);
+    }
+    
+    return 0;
+}
+```
+
+`<cstdio>` 헤더의 `std::rename` 함수는 `std::remove` 함수와 거의 비슷한 방법으로 사용할 수 있다.
