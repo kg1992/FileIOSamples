@@ -14,7 +14,7 @@
     - [PODToBinaryFile](#podtobinaryfile)
     - [Book](#book)
     - [DeleteFile](#deletefile)
-    - [MoveTORecycleBin](#movetorecyclebin)
+    - [MoveToRecycleBin](#movetorecyclebin)
     - [RenameFile](#renamefile)
 
 ## 빌드
@@ -716,7 +716,7 @@ int main(int argc, char** argv)
 - `errno`가 `ENOENT`인 경우 지정된 경로에서 파일을 찾지 못한 경우이다.
 - `errno`가 `EACCES`인 경우 파일을 찾기는 했지만 파일을 삭제할 권한이 없음을 의미한다.
 
-### MoveTORecycleBin
+### MoveToRecycleBin
 
 이 프로그램은 파일을 명령줄 인수로 받아서 휴지통으로 옮긴다. 윈도우즈에서만 빌드할 수 있다.
 
@@ -856,4 +856,6 @@ int main(int argc, char** argv)
 }
 ```
 
-`<cstdio>` 헤더의 `std::rename` 함수는 `std::remove` 함수와 거의 비슷한 방법으로 사용할 수 있다.
+`rename`을 사용하는 줄 빼고는 [DeleteFile](#DeleteFile)과 거의 동일하다.
+
+### 
