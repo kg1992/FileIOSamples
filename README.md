@@ -16,6 +16,8 @@
     - [DeleteFile](#deletefile)
     - [MoveToRecycleBin](#movetorecyclebin)
     - [RenameFile](#renamefile)
+    - [ZipCompress](#zipcompress)
+    - [ListFolder](#listfolder)
 
 ## 빌드
 
@@ -858,4 +860,144 @@ int main(int argc, char** argv)
 
 `rename`을 사용하는 줄 빼고는 [DeleteFile](#DeleteFile)과 거의 동일하다.
 
-### 
+### ZipCompress
+
+이 예시는 긴 문자열을 deflate로 압축한 뒤 inflate로 압축해제하고 원래 데이터와 동일한지 확인한다.
+
+```c++
+#include <iostream> 
+#include <zlib.h>
+#include <cassert>
+#include <vector>
+
+#define CHUNK 16654
+
+void PrintZStream(z_stream& strm)
+{
+    std::cout
+        << "* strm at :" << &strm << std::endl
+        << "strm.avail_in == " << strm.avail_in << std::endl
+        << "strm.avail_out == " << strm.avail_out << std::endl
+        << "strm.next_in == " << (void*)strm.next_in << std::endl
+        << "strm.next_out == " << (void*)strm.next_out << std::endl
+        <<"strm.total_in == " << strm.total_in << std::endl
+        << "strm.total_out == " << strm.total_out << std::endl;
+}
+
+int main()
+{
+    std::string str = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    std::vector<unsigned char> out_buffer(CHUNK, 0);
+
+    int ret;
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+
+    ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+    if (ret != Z_OK)
+    {
+        std::cerr << "deflateInit Failed" << std::endl;
+        return ret;
+    }
+
+    strm.avail_in = str.size();
+    strm.next_in = (Bytef*)str.data();
+
+    strm.avail_out = out_buffer.size();
+    strm.next_out = out_buffer.data();
+
+    PrintZStream(strm);
+
+    std::cout << "-- deflate Z_NO_FLUSH-- " << std::endl;
+    while (strm.total_in != str.size())
+    {
+        ret = deflate(&strm, Z_NO_FLUSH);
+        assert(ret != Z_STREAM_ERROR);
+        PrintZStream(strm);
+    }
+
+    std::cout << "-- deflate Z_FINISH -- " << std::endl;
+    ret = deflate(&strm, Z_FINISH);
+    assert(ret != Z_STREAM_ERROR);
+    PrintZStream(strm);
+
+    std::cout << "-- deflate end -- " << std::endl;
+    ret = deflateEnd(&strm);
+    assert(ret != Z_STREAM_ERROR);
+    PrintZStream(strm);
+
+    std::vector<unsigned char> infout_buffer(CHUNK, 0);
+  
+    strm.avail_in = out_buffer.size();
+    strm.avail_out = infout_buffer.size();
+    strm.next_in = out_buffer.data();
+    strm.next_out = infout_buffer.data();
+
+    std::cout << "-- inflate init -- " << std::endl;
+    ret = inflateInit(&strm);
+    assert(ret != Z_STREAM_ERROR);
+    PrintZStream(strm);
+
+    std::cout << "-- inflate -- " << std::endl;
+    while (strm.total_out < infout_buffer.size() && strm.total_in < out_buffer.size())
+    {
+        ret = inflate(&strm, Z_NO_FLUSH);
+        PrintZStream(strm);
+        if (ret == Z_STREAM_END) break;
+        assert(ret != Z_STREAM_ERROR);
+    }
+
+    std::cout << "-- inflate end-- " << std::endl;
+    ret = inflateEnd(&strm);
+    assert(ret != Z_STREAM_ERROR);
+    PrintZStream(strm);
+
+    assert(std::equal(str.begin(), str.end(), infout_buffer.begin()));
+
+    return 0;
+}
+```
+
+### ListFolder
+
+이 예시는 폴더를 명령줄 인수로 받아 폴더 안에 있는 파일과 폴더의 목록을 출력한다.
+
+```cpp
+// ListFolder.cpp
+#include <filesystem>
+#include <iostream>
+
+int main(int argc, char** argv)
+{
+    if( argc < 2 )
+    {
+        std::cout << "usage : ListFolder [directoryName]" << std::endl;
+        return 0;
+    }
+
+    std::filesystem::path path = argv[1];
+
+    if(!std::filesystem::exists(path))
+    {
+        std::cerr << path << " is not found." << std::endl;
+        return 1;
+    }
+    else if (!std::filesystem::is_directory(path))
+    {
+        std::cerr << path << " is not directory." << std::endl;
+        return 2;
+    }
+
+    int count = 0;
+    for(std::filesystem::directory_iterator iter = std::filesystem::directory_iterator(path); 
+        iter != std::filesystem::directory_iterator(); 
+        ++iter)
+    {
+        std::cout << ++count << " : " << iter->path().string() << std::endl;
+    }
+
+    return 0;
+}
+```

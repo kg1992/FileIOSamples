@@ -27,6 +27,8 @@ if( ZLIB_FOUND )
     target_link_libraries(ZipCompress PRIVATE ZLIB::ZLIB)
     target_include_directories(ZipCompress PRIVATE ${ZLIB_INCLUDE_DIR})
 endif()
+add_executable(ListFolder ListFolder.cpp)
+target_compile_features(ListFolder PRIVATE cxx_std_17)
 
 message(STATUS ${CMAKE_CXX_COMPILER_ID})
 message(STATUS ${CMAKE_CXX_COMPILER_VERSION})
