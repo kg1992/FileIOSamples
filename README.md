@@ -84,7 +84,7 @@ int main()
 }
 ```
 
-`std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해 넣는 알고리즘이다.
+`std::copy(first, last, d_first)`는 `first` 부터 `last` 사이의 원소를 `d_first` 에서부터 차례대로 복사해넣는 알고리즘이다.
 
 `std::istreambuf_iterator`의 생성자는 `std::basic_istream` 객체를 받는다. 이터레이터를 참조하면 `std::basic_istream`와 연관된 스트림 객체의 `std::basic_sterambuf::sgetc` 함수를 호출해 얻은 문자를 반환한다.
 
@@ -207,7 +207,13 @@ int main(int argc, char** argv)
 }
 ```
 
-`std::ifstream`의 생성자에 `std::ios_base::binary`를 인수로 제공할 경우 파일을 바이너리로 파일로서 읽어들인다. gcc의 경우 별 차이는 없다. VisaulC의 경우 텍스트 모드일 때 `\r\n` 문자열이 파일 속에 존재할 경우 `\r`을 무시하고 `\n`만 읽어들이며, 바이너리 모드일 경우 `\r\n`(0d0a)을 그대로 읽어들인다. 예를 들어 윈도우즈 메모장에서 작성하고 저장한 파일인 `Text.txt`파일로 실행 할 경우 마지막에 새줄이 들어가 있으며 파일을 실행할 때 다음과 같은 결과를 출력한다. 마지막에 두 바이트가 0d 0a인 것을 확인할 수 있다.
+`std::ifstream`의 생성자에 `std::ios_base::binary`를 인수로 제공할 경우 파일을 바이너리로 파일로서 읽어들인다.
+
+- gcc의 경우 별 차이는 없다.
+- VisaulC의 경우 텍스트 모드일 때 `\r\n` 문자열이 파일 속에 존재할 경우 `\r`을 무시하고 `\n`만 읽어들이며, 바이너리 모드일 경우 `\r\n`(0d0a)을 그대로 읽어들인다. 예를 들어 윈도우즈 메모장에서 작성하고 저장한 파일인 `Text.txt`파일로 실행 할 경우 마지막에 새줄이 들어가 있으며 파일을 실행할 때 다음과 같은 결과를 출력한다. 마지막에 두 바이트가 0d 0a인 것을 확인할 수 있다.
+
+> 그냥 `std::ios_base::binary` 대신 `std::ios_base::in | std::ios_base::binary`를 넣어야 하는 것 아닌가?  
+> -> `std::ifstream`의 경우 생성자 안에서 플래그에 자동으로 `std::ios_base::in`를 덮어쓰기 때문에 상관없다.
 
 ```console
             0  1  2  3  4  5  6  7  8  9
@@ -271,10 +277,10 @@ int main(int argc, char** argv)
 
     const char* const sourceFilename = argv[1];
     const char* const destinationFilename = argv[2];
-    std::ifstream ifs(sourceFilename);
+    std::ifstream ifs(sourceFilename, std::ios_base::binary);
     if(ifs)
     {
-        std::ofstream ofs(destinationFilename);
+        std::ofstream ofs(destinationFilename, std::ios_base::binary);
         if( ofs )
         {
             std::copy(
@@ -296,7 +302,7 @@ int main(int argc, char** argv)
 }
 ```
 
-[PipePrint](#PipePrint)와 동일한 코드를 사용하지만 `std::istreambuf_iterator`, `std::ostreambuf_iterator`의 생성자에 `std::cin`과 `std::cout` 대신에 `std::ifstream`과 `std::ofsteram` 객체를 제공한다.
+[PipePrint](#PipePrint)와 비슷한 코드를 사용하지만 `std::istreambuf_iterator`, `std::ostreambuf_iterator`의 생성자에 `std::cin`과 `std::cout` 대신에 `std::ifstream`과 `std::ofsteram` 객체를 제공한다.
 
 ### FileSize
 
@@ -474,6 +480,10 @@ int main()
 }
 ```
 
+`#pragma pack(push, 1)`은 구조체의 메모리 정렬(packing)을 1 byte 단위로 하게 만든다. 따라서 변수 사이에 남는 공간이 없어진다.
+
+`#pragma pack(pop)`은 마지막으로 push한 메모리 정렬 기준을 없애고 원래 기준으로 되돌린다.
+
 `std::ofstream::write(s, n)`은 `s`부터 시작하는 문자열을 `n`개 출력한다. 중간에 null 캐릭터가 있어도 멈추지 않으며, `n`은 정확한 배열의 크기와 쓰여질 데이터의 크기와 같다.
 
 `std::ofstream::read(s, n)`은 스트림에서 `n`개의 바이트를 읽어 `s`에 순서대로 가져온다. 이 때에도 중간에 null 캐릭터가 있어도 멈추지 않으며, `s` 배열의 크기는 정확히 `n`이면 충분하다.
@@ -486,9 +496,9 @@ unformatted I/O를 하는 경우 컴퓨터의 구현에 따라 같은 코드에�
 
 1. 오직 자기 PC에서 생성한 파일 만을 사용하거나
 2. 파일 형식에 따라 바이트 오더를 지정하거나 (예를 들어 BSON파일은 리틀 엔디안일 것을 권장한다)
-3. 바이트 오더를 알 수 있는 힌트를 제시해야 한다 (예를 들어 UTF-16 유니코드 텍스트 문서는 BOM가 맨 처음에 온다)
+3. 바이트 오더를 알 수 있는 힌트를 제시해야 한다 (예를 들어 UTF-16 유니코드 텍스트 문서는 BOM(byte order mark)가 맨 처음에 온다)
 
-`<cstring>` 헤더의 `std::memcmp(ptr1, ptr2, num)`는 주어진 `ptr1`, `ptr2`에서 시작하는 `num` 크기의 바이트 배열이 서로 일치하는지 확인한다. 일치할 경우 0을 반환한다. 서로 일치하지 않을 경우 처음으로 일치하지 않는 첫 번째 바이트의 차이(`ptr1[i] - ptr2[i]`)를 반환한다.
+`<cstring>` 헤더의 `std::memcmp(ptr1, ptr2, num)`는 주어진 `ptr1`, `ptr2`에서 시작하는 `num` 크기의 바이트 배열이 서로 일치하는지 확인하고 일치할 경우 0을 반환한다. 서로 일치하지 않을 경우 처음으로 일치하지 않는 첫 번째 바이트의 차이(`ptr1[i] - ptr2[i]`)를 반환한다.
 
 ### Book
 
@@ -656,7 +666,7 @@ input command. input ctrl+z to stop:
 
    1. `istream`의 경우 `operator>>`를 오버로딩한다. `ostream`의 경우 `operator<<`를 오버로딩 한다.
    2. 첫 번째 인수는 스트림 객체의 참조를 받는다.
-   3. 첫 번째 인수로 전달받은 스트림 참조를 그대로 반환한다.
+   3. 받은 스트림 참조를 그대로 반환한다.
    4. 만약 작업에 실패한 경우 `std::ios_base::failbit`를 설정해야 한다.
 
 1번, 2번, 3번은 함수 호출을 연결할 수 있게 만들기 위해 필요한 조건이다. `std::cout << 1 << 2 << 3;`이 작동할 수 있는 이유는 `std::cout << 1`을 연산한 결과 `std::cout`이 그 자리에 그대로 반환되기 때문이다.
@@ -843,6 +853,10 @@ int main(int argc, char** argv)
         {
             std::fprintf(stderr, "error: no access; process has no reading access to %s or writing access right to %s.\n", src, dst);
         }
+        else if( errno == EEXIST)
+        {
+            std::fprintf(stderr, "error: file exists; file with name %s already exists.\n", dst);
+        }
         else
         {
             std::fprintf(stderr, "error: %d.\n", errno);
@@ -856,9 +870,12 @@ int main(int argc, char** argv)
     
     return 0;
 }
+
 ```
 
 `rename`을 사용하는 줄 빼고는 [DeleteFile](#DeleteFile)과 거의 동일하다.
+
+만약 지정한 경로에 이미 다른 파일이 존재하는 경우 `errno`를 `EEXIST`로 설정하고 실패한다.
 
 ### ZipCompress
 
@@ -960,9 +977,18 @@ int main()
 }
 ```
 
+zlib의 deflate를 사용해 데이터를 압축하려면 다음 순서를 따라 함수를 적절한 함수를 호출해야 한다.
+
+1. deflateInit을 사용해 z_stream객체를 초기화 한다.
+2. deflate함수를 Z_NO_FLUSH와 함께 사용해 입력을 처리한다. 입력이 모두 소진될 때 까지 반복한다.
+3. deflate함수를 Z_FINISH와 함께 사용해 압축을 완수한다.
+4. deflateEnd함수를 사용해 deflate 작업을 종료한다.
+
+inflate또한 inflateInit, inflate, inflateEnd를 사용해 비슷하게 수행할 수 있다.
+
 ### ListFolder
 
-이 예시는 폴더를 명령줄 인수로 받아 폴더 안에 있는 파일과 폴더의 목록을 출력한다.
+이 예시는 폴더를 명령줄 인수로 받아 폴더 안에 있는 파일과 폴더의 목록을 출력한다. 이 예시는 C++17을 지원하는 컴파일러만 빌드할 수 있다.
 
 ```cpp
 // ListFolder.cpp
@@ -1001,3 +1027,15 @@ int main(int argc, char** argv)
     return 0;
 }
 ```
+
+이 예시는 `<filesystem>`헤더의 내용을 사용한다. C++17을 지원하지 않는 경우 부스트 라이브러리의 `<boost/filesystem.hpp>`을 대신 사용할 수 있다.
+
+`std::filesystem::path` 클래스는 파일 경로를 담기 위한 클래스이다. `VisualC`의 경우 내부에 실제 경로를 나타내는 문자열 데이터는 항상 `wchar_t`를 사용한다. 그러나 ANSI `char` 문자열로 초기화 할 수도 있다.
+
+`std::filesystem::exsists`는 해당 경로에 파일이나 폴더가 존재하는 가를 확인한다.
+
+`std::filesystem::is_directory`는 해당 경로에 존재하는 것이 폴더인지 아닌지를 확인한다.
+
+`std::filesystem::directory_iterator`는 폴더의 경로를 받아 폴더 안에 있는 파일의 내용을 하나 씩 반환한다. 이 경우 다음과 같이 쓸 수도 있다.
+
+`std::filesystem::directory_iterator`를 참조하면 `std::filesystem::directory_entry` 객체를 반환한다. 이 객체를 사용하여 디렉토리의 내용물에 대한 다양한 정보를 알 수 있다. 이 예시에서는 `std::filesystem::directory_entry::path()`만을 사용하여 경로를 구해 출력했다.

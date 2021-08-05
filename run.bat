@@ -66,14 +66,14 @@ type BookCommands.txt | Book
 echo.
 timeout 1 > nul
 
-echo "DeleteFile DeleteMe.txt"
+echo "DeleteFile aaaa"
 timeout 1 > nul
 DeleteFile aaaa
 echo.
 timeout 1 > nul
 
 echo "echo delete me! > DeleteMe.txt"
-echo "DeleteFile TextCopy.txt"
+echo "DeleteFile DeleteMe.txt"
 timeout 1 > nul
 echo delete me! > DeleteMe.txt
 DeleteFile DeleteMe.txt

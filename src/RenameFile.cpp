@@ -22,6 +22,10 @@ int main(int argc, char** argv)
         {
             std::fprintf(stderr, "error: no access; process has no reading access to %s or writing access right to %s.\n", src, dst);
         }
+        else if( errno == EEXIST)
+        {
+            std::fprintf(stderr, "error: file exists; file with name %s already exists.\n", dst);
+        }
         else
         {
             std::fprintf(stderr, "error: %d.\n", errno);

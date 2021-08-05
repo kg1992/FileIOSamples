@@ -11,10 +11,10 @@ int main(int argc, char** argv)
 
     const char* const sourceFilename = argv[1];
     const char* const destinationFilename = argv[2];
-    std::ifstream ifs(sourceFilename);
+    std::ifstream ifs(sourceFilename, std::ios_base::binary);
     if(ifs)
     {
-        std::ofstream ofs(destinationFilename);
+        std::ofstream ofs(destinationFilename, std::ios_base::binary);
         if( ofs )
         {
             std::copy(
